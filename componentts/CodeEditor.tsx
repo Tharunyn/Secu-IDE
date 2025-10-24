@@ -7,26 +7,28 @@ export default function CodeEditor() {
   const [code, setCode] = useState("// Type JS code here!");
   const [output, setOutput] = useState("");
 
-  // Run code function
   const runCode = () => {
     let logs: string[] = [];
 
-    // Override console.log temporarily
+    // Capture console.log
     const originalConsole = console.log;
     console.log = (...args: any[]) => {
       logs.push(args.join(" "));
-      originalConsole(...args); // still print to browser console
+      originalConsole(...args);
     };
 
     try {
-      eval(code); // Run user code
-      setOutput(logs.join("\n") || "Code ran successfully!");
+      const result = eval(code); // run the code
+      if (logs.length === 0 && result !== undefined) {
+        // If no console.log, show returned value
+        logs.push(String(result));
+      }
+      setOutput(logs.join("\n"));
     } catch (err: any) {
       setOutput("❌ Error: " + err.message);
     }
 
-    // Restore original console
-    console.log = originalConsole;
+    console.log = originalConsole; // restore console
   };
 
   return (
@@ -37,7 +39,7 @@ export default function CodeEditor() {
           onClick={runCode}
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-md"
         >
-          ▶ Run 
+          ▶ Run Code
         </button>
       </div>
 
