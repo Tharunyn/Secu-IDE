@@ -4,7 +4,7 @@ import { useState } from "react";
 import Editor from "@monaco-editor/react";
 
 export default function CodeEditor() {
-  const [code, setCode] = useState("// Write some JavaScript code here!\nconsole.log('Hello World');");
+  const [code, setCode] = useState("// You can write ur code guyzzz");
   const [output, setOutput] = useState("");
 
   // Function to run the code
