@@ -4,17 +4,29 @@ import { useState } from "react";
 import Editor from "@monaco-editor/react";
 
 export default function CodeEditor() {
-  const [code, setCode] = useState("// You can write ur code guyz");
+  const [code, setCode] = useState("// Type JS code here!\nconsole.log('Hello World');");
   const [output, setOutput] = useState("");
 
-  // Function to run the code
+  // Run code function
   const runCode = () => {
+    let logs: string[] = [];
+
+    // Override console.log temporarily
+    const originalConsole = console.log;
+    console.log = (...args: any[]) => {
+      logs.push(args.join(" "));
+      originalConsole(...args); // still print to browser console
+    };
+
     try {
-      const result = eval(code); // runs the JS code
-      setOutput(String(result) || "Code ran successfully. Check console output.");
+      eval(code); // Run user code
+      setOutput(logs.join("\n") || "Code ran successfully!");
     } catch (err: any) {
       setOutput("❌ Error: " + err.message);
     }
+
+    // Restore original console
+    console.log = originalConsole;
   };
 
   return (
@@ -25,7 +37,7 @@ export default function CodeEditor() {
           onClick={runCode}
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-md"
         >
-          ▶ Run Code
+          ▶ Run 
         </button>
       </div>
 
