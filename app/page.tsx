@@ -1,16 +1,18 @@
-"use client";
+'use client';
+import React, { useState } from 'react';
+import CodeEditor from './components/CodeEditor';
+import WarningsPanel from './components/WarningsPanel';
 
-import dynamic from "next/dynamic";
+const HomePage: React.FC = () => {
+  const [warnings, setWarnings] = useState<any[]>([]);
 
-// Dynamically import the editor so it only loads in the browser
-const CodeEditor = dynamic(() => import("../components/CodeEditor"), {
-  ssr: false, // Disable server-side rendering for this component
-});
-
-export default function Home() {
   return (
-    <main className="h-screen w-full">
-      <CodeEditor />
+    <main className="h-screen w-full p-4 bg-gray-900">
+      <h1 className="text-2xl font-bold text-white mb-4">Solidity Security Editor</h1>
+      <CodeEditor onAnalysis={setWarnings} />
+      <WarningsPanel warnings={warnings} />
     </main>
   );
-}
+};
+
+export default HomePage;

@@ -1,16 +1,16 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 
 const MonacoEditor = dynamic(() => import('react-monaco-editor'), { ssr: false });
 
-interface EditorProps {
-  onAnalysis: (warnings: any[]) => void;
+interface CodeEditorProps {
+  onAnalysis?: (warnings: any[]) => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ onAnalysis }) => {
-  const [code, setCode] = useState<string>('');
+const CodeEditor: React.FC<CodeEditorProps> = ({ onAnalysis }) => {
+  const [code, setCode] = useState('');
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const handleChange = (newCode: string) => {
@@ -19,20 +19,17 @@ const Editor: React.FC<EditorProps> = ({ onAnalysis }) => {
     if (timeoutId) clearTimeout(timeoutId);
 
     // Debounce API call
-    const id = setTimeout(() => {
-      analyzeCode(newCode);
-    }, 1500);
-
+    const id = setTimeout(() => analyzeCode(newCode), 1500);
     setTimeoutId(id);
   };
 
   const analyzeCode = async (code: string) => {
     try {
       const response = await axios.post('http://YOUR_DOCKER_HOST:PORT/analyze', { code });
-      onAnalysis(response.data.warnings || []);
+      onAnalysis?.(response.data.warnings || []);
     } catch (err) {
       console.error('Analysis failed', err);
-      onAnalysis([]);
+      onAnalysis?.([]);
     }
   };
 
@@ -51,4 +48,4 @@ const Editor: React.FC<EditorProps> = ({ onAnalysis }) => {
   );
 };
 
-export default Editor;
+export default CodeEditor;
