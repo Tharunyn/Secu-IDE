@@ -23,23 +23,25 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onAnalysis }) => {
 
   const handleChange = (newCode: string) => {
     setCode(newCode);
-    if (timeoutId) clearTimeout(timeoutId);
 
+    if (timeoutId) clearTimeout(timeoutId);
     const id = setTimeout(() => analyzeCode(newCode), 1500);
     setTimeoutId(id);
   };
 
   const analyzeCode = async (code: string) => {
+    if (!editorRef.current) return;
     try {
       const response = await axios.post('http://YOUR_DOCKER_HOST:5000/analyze', { code });
       const warnings: Warning[] = response.data.warnings || [];
 
-      // Highlight lines
-      if (editorRef.current) {
+      // Highlight lines using monaco.Range
+      const monaco = (window as any).monaco;
+      if (monaco && editorRef.current) {
         decorationsRef.current = editorRef.current.deltaDecorations(
           decorationsRef.current,
-          warnings.map(w => ({
-            range: new editorRef.current.Range(w.line, 1, w.line, 1),
+          warnings.map((w) => ({
+            range: new monaco.Range(w.line, 1, w.line, 1),
             options: {
               isWholeLine: true,
               className: w.type === 'Critical' ? 'line-decoration-red' : 'line-decoration-yellow',
