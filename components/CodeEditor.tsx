@@ -5,20 +5,7 @@ import Editor, { OnMount } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 
 export default function CodeEditor() {
-  const [code, setCode] = useState(`// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-contract VulnerableContract {
-    uint public count;
-
-    function increment() public {
-        count += 1;
-    }
-
-    function reset() public {
-        count = 0;
-    }
-}`);
+  const [code, setCode] = useState(`ur solidity contract goes here`);
   const [analysisResults, setAnalysisResults] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
