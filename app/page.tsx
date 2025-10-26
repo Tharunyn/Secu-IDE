@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import CodeEditor from './components/CodeEditor';
-import WarningsPanel from './components/WarningsPanel';
+import CodeEditor from '../components/CodeEditor';
+import WarningsPanel from '../components/WarningsPanel';
 
 const HomePage: React.FC = () => {
   const [warnings, setWarnings] = useState<any[]>([]);
