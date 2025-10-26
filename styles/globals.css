@@ -7,3 +7,12 @@ body {
 h1 {
   color: #facc15;
 }
+
+/* Monaco Editor line highlights for Slither warnings */
+.line-decoration-red {
+  background-color: rgba(255, 0, 0, 0.2);
+}
+
+.line-decoration-yellow {
+  background-color: rgba(255, 255, 0, 0.2);
+}
