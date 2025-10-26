@@ -26,19 +26,27 @@ const HomePage: React.FC = () => {
   return (
     <main className="h-screen w-full p-4 bg-gray-900">
       <h1 className="text-2xl font-bold text-white mb-4">Solidity Security Editor</h1>
-      <CodeEditor onAnalysis={setWarnings}/>
+
+      {/* Editor */}
+      <CodeEditor onAnalysis={setWarnings} />
+
+      {/* Code textarea */}
       <textarea
         className="w-full mt-2 p-2 rounded bg-gray-700 text-white"
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        placeholder="Code will be compiled here"
+        placeholder="Type Solidity code here"
       />
+
+      {/* Compile button */}
       <button
         className="bg-green-500 text-white px-4 py-2 rounded mt-2"
         onClick={compileCode}
       >
         Compile
       </button>
+
+      {/* Warnings panel */}
       <WarningsPanel warnings={warnings} />
     </main>
   );
