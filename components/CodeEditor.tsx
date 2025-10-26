@@ -1,99 +1,125 @@
 "use client";
 
-import React, { useState } from "react";
-import Editor from "@monaco-editor/react";
-import * as solc from "solc";
+import { useState, useRef } from "react";
+import Editor, { OnMount } from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
 
 export default function CodeEditor() {
-  const [code, setCode] = useState(`// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+  const [code, setCode] = useState(`ur solidity contract goes here`);
+  const [analysisResults, setAnalysisResults] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-contract HelloWorld {
-    string public message = "Hello, Blockchain!";
-    
-    function setMessage(string calldata newMessage) public {
-        message = newMessage;
-    }
-}
-`);
-  const [output, setOutput] = useState<string>("");
+  const handleEditorDidMount: OnMount = (editor) => {
+    editorRef.current = editor;
+  };
 
-  // Compile Solidity code using solc-js
-  const handleCompile = async () => {
+  // Connects to backend API for Solidity analysis
+  const analyzeContract = async () => {
+    if (!editorRef.current) return;
+
+    setLoading(true);
+    setAnalysisResults([]);
+
     try {
-      const input = {
-        language: "Solidity",
-        sources: {
-          "Contract.sol": {
-            content: code,
-          },
-        },
-        settings: {
-          outputSelection: {
-            "*": {
-              "*": ["abi", "evm.bytecode", "evm.sourceMap"],
-            },
-          },
-        },
-      };
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
 
-      const output = JSON.parse(solc.compile(JSON.stringify(input)));
+      const data = await res.json();
 
-      if (output.errors) {
-        const messages = output.errors
-          .map((err: any) => `${err.severity.toUpperCase()}: ${err.formattedMessage}`)
-          .join("\n");
-        setOutput(messages);
-      } else {
-        const contracts = output.contracts["Contract.sol"];
-        const compiled = Object.keys(contracts)
-          .map(
-            (name) =>
-              `✅ ${name}\nABI: ${JSON.stringify(
-                contracts[name].abi,
-                null,
-                2
-              )}\nBytecode: ${contracts[name].evm.bytecode.object.substring(0, 60)}...`
-          )
-          .join("\n\n");
-        setOutput(compiled);
-      }
+      if (!res.ok) throw new Error(data.error || "Analysis failed");
+
+      // Highlight lines based on results
+      const decorations = data.results.map((v: any) => ({
+        range: new monaco.Range(v.line, 1, v.line, 1),
+        options: {
+          isWholeLine: true,
+          className: v.severity === "critical" ? "criticalLine" : "warningLine",
+          glyphMarginClassName:
+            v.severity === "critical"
+              ? "criticalGlyph"
+              : "warningGlyph",
+          hoverMessage: { value: `${v.severity.toUpperCase()}: ${v.message}` },
+        },
+      }));
+
+      editorRef.current.deltaDecorations([], decorations);
+      setAnalysisResults(data.results.map((v: any) => `${v.severity.toUpperCase()}: ${v.message}`));
     } catch (err: any) {
-      setOutput("❌ Compilation failed: " + err.message);
+      setAnalysisResults([`❌ Error: ${err.message}`]);
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-white p-4 space-y-4">
-      <header className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-lg shadow">
-        <h1 className="text-lg font-bold">🧱 Solidity Compiler (Browser)</h1>
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
+      {/* Header */}
+      <div className="flex justify-between items-center bg-gray-800 px-4 py-2">
+        <h2 className="text-lg font-semibold">Solidity Web Editor</h2>
         <button
-          onClick={handleCompile}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded-md"
+          onClick={analyzeContract}
+          className="bg-blue-500 hover:bg-blue-600 px-4 py-1 rounded-md"
+          disabled={loading}
         >
-          Compile
+          {loading ? "Analyzing..." : "Analyze Contract"}
         </button>
-      </header>
+      </div>
 
-      <div className="flex-1 rounded-lg overflow-hidden border border-gray-700 shadow">
+      {/* Code Editor */}
+      <div className="flex-1">
         <Editor
           height="100%"
           defaultLanguage="solidity"
-          value={code}
           theme="vs-dark"
-          onChange={(val) => setCode(val || "")}
+          value={code}
+          onChange={(value) => setCode(value || "")}
+          onMount={handleEditorDidMount}
           options={{
             minimap: { enabled: false },
             fontSize: 14,
-            automaticLayout: true,
+            scrollBeyondLastLine: false,
+            glyphMargin: true,
           }}
         />
       </div>
 
-      <footer className="bg-black p-4 rounded-lg border border-gray-700 overflow-y-auto h-48 font-mono text-sm">
-        <strong>Output:</strong>
-        <pre className="whitespace-pre-wrap mt-2">{output}</pre>
-      </footer>
+      {/* Results */}
+      <div className="bg-black p-4 h-40 overflow-y-auto border-t border-gray-700 font-mono text-sm">
+        <strong>Analysis Results:</strong>
+        {analysisResults.length === 0 ? (
+          <p>No results yet. Click "Analyze Contract".</p>
+        ) : (
+          <ul className="mt-2 space-y-1">
+            {analysisResults.map((res, idx) => (
+              <li key={idx}>{res}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Styles for highlighting */}
+      <style jsx>{`
+        .criticalLine {
+          background-color: rgba(255, 0, 0, 0.25);
+        }
+        .warningLine {
+          background-color: rgba(255, 255, 0, 0.25);
+        }
+        .criticalGlyph {
+          background-color: red;
+          width: 5px;
+          border-radius: 50%;
+        }
+        .warningGlyph {
+          background-color: yellow;
+          width: 5px;
+          border-radius: 50%;
+        }
+      `}</style>
     </div>
   );
 }
