@@ -37,20 +37,16 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onAnalysis }) => {
 
       // Highlight lines using monaco.Range
       const monaco = (window as any).monaco;
-      if (monaco && editorRef.current) {
-        decorationsRef.current = editorRef.current.deltaDecorations(
-          decorationsRef.current,
-          warnings.map((w) => ({
-            range: new monaco.Range(w.line, 1, w.line, 1),
-            options: {
-              isWholeLine: true,
-              className: w.type === 'Critical' ? 'line-decoration-red' : 'line-decoration-yellow',
-              glyphMarginClassName: 'glyph-margin',
-            },
-          }))
-        );
-      }
-
+      decorationsRef.current = editorRef.current.deltaDecorations(
+        decorationsRef.current,
+        warnings.map((w) => ({
+          range: new monaco.Range(w.line, 1, w.line, 1),
+          options: {
+            isWholeLine: true,
+            className: w.type === 'Critical' ? 'line-decoration-red' : 'line-decoration-yellow',
+          },
+       }))
+      );
       onAnalysis?.(warnings);
     } catch (err) {
       console.error('Analysis failed', err);

@@ -26,9 +26,7 @@ const HomePage: React.FC = () => {
   return (
     <main className="h-screen w-full p-4 bg-gray-900">
       <h1 className="text-2xl font-bold text-white mb-4">Solidity Security Editor</h1>
-      <CodeEditor
-        onAnalysis={(w) => setWarnings(w)}
-      />
+      <CodeEditor onAnalysis={setWarnings}/>
       <textarea
         className="w-full mt-2 p-2 rounded bg-gray-700 text-white"
         value={code}
