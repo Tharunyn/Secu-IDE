@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 
+// SSR-safe Monaco import
 const MonacoEditor = dynamic(() => import('react-monaco-editor'), { ssr: false });
 
 export interface Warning {
@@ -17,51 +18,51 @@ interface CodeEditorProps {
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ onAnalysis }) => {
   const [code, setCode] = useState('');
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [mounted, setMounted] = useState(false); // ensures client-only render
+  const [mounted, setMounted] = useState(false);
   const editorRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Ensure editor only mounts on client
+  // Client-only mount
   useEffect(() => setMounted(true), []);
 
-  const handleChange = (newCode: string) => {
-    setCode(newCode);
-    if (timeoutId) clearTimeout(timeoutId);
-    const id = setTimeout(() => analyzeCode(newCode), 1500); // debounce
-    setTimeoutId(id);
-  };
+  // Debounced analysis
+  useEffect(() => {
+    if (!mounted || !editorRef.current) return;
 
-  const analyzeCode = async (code: string) => {
-    if (!editorRef.current) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await axios.post('http://YOUR_DOCKER_HOST:5000/analyze', { code });
+        const warnings: Warning[] = response.data.warnings || [];
 
-    try {
-      const response = await axios.post('http://YOUR_DOCKER_HOST:5000/analyze', { code });
-      const warnings: Warning[] = response.data.warnings || [];
+        const monaco = (window as any).monaco;
+        if (monaco) {
+          decorationsRef.current = editorRef.current.deltaDecorations(
+            decorationsRef.current,
+            warnings.map((w) => ({
+              range: new monaco.Range(w.line, 1, w.line, 1),
+              options: {
+                isWholeLine: true,
+                className: w.type === 'Critical' ? 'line-decoration-red' : 'line-decoration-yellow',
+              },
+            }))
+          );
+        }
 
-      // Highlight lines safely
-      const monaco = (window as any).monaco;
-      if (monaco) {
-        decorationsRef.current = editorRef.current.deltaDecorations(
-          decorationsRef.current,
-          warnings.map((w) => ({
-            range: new monaco.Range(w.line, 1, w.line, 1),
-            options: {
-              isWholeLine: true,
-              className: w.type === 'Critical' ? 'line-decoration-red' : 'line-decoration-yellow',
-            },
-          }))
-        );
+        onAnalysis?.(warnings);
+      } catch (err) {
+        console.error('Analysis failed', err);
+        onAnalysis?.([]);
       }
+    }, 1500);
 
-      onAnalysis?.(warnings); // only update warnings, not code
-    } catch (err) {
-      console.error('Analysis failed', err);
-      onAnalysis?.([]);
-    }
-  };
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [code, mounted, onAnalysis]);
 
-  if (!mounted) return null; // render nothing on server
+  if (!mounted) return null;
 
   return (
     <MonacoEditor
@@ -69,8 +70,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onAnalysis }) => {
       language="solidity"
       theme="vs-dark"
       value={code}
+      onChange={(newCode) => setCode(newCode)}
       editorDidMount={(editor) => (editorRef.current = editor)}
-      onChange={handleChange}
       options={{ fontSize: 14, minimap: { enabled: false }, glyphMargin: true }}
     />
   );
