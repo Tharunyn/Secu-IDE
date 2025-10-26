@@ -1,12 +1,19 @@
 'use client';
-import React, { useState } from 'react';
-import CodeEditor, { Warning } from '../components/CodeEditor';
-import WarningsPanel from '../components/WarningsPanel';
+import React, { useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import solc from 'solc';
 
+// SSR-safe Monaco import
+const MonacoEditor = dynamic(() => import('react-monaco-editor'), { ssr: false });
+
 const HomePage: React.FC = () => {
-  const [warnings, setWarnings] = useState<Warning[]>([]);
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(`pragma solidity ^0.8.0;
+
+contract HelloWorld {
+    string public greeting = "Hello, World!";
+}`);
+  const [output, setOutput] = useState('');
+  const editorRef = useRef<any>(null);
 
   const compileCode = () => {
     try {
@@ -15,39 +22,45 @@ const HomePage: React.FC = () => {
         sources: { 'Contract.sol': { content: code } },
         settings: { outputSelection: { '*': { '*': ['*'] } } },
       };
-      const output = JSON.parse(solc.compile(JSON.stringify(input)));
-      if (output.errors) console.log(output.errors);
-      alert('Compilation finished! Check console for errors/warnings.');
-    } catch (err) {
-      console.error(err);
+
+      const compiled = JSON.parse(solc.compile(JSON.stringify(input)));
+      setOutput(JSON.stringify(compiled.errors || compiled.contracts, null, 2));
+    } catch (err: any) {
+      setOutput(err.message);
     }
   };
 
   return (
-    <main className="h-screen w-full p-4 bg-gray-900">
-      <h1 className="text-2xl font-bold text-white mb-4">Solidity Security Editor</h1>
+    <main className="h-screen w-full p-4 bg-gray-900 text-white">
+      <h1 className="text-2xl font-bold mb-4">Solidity Web Editor</h1>
 
-      {/* Editor */}
-      <CodeEditor onAnalysis={setWarnings} />
-
-      {/* Code textarea */}
-      <textarea
-        className="w-full mt-2 p-2 rounded bg-gray-700 text-white"
+      {/* Monaco Editor */}
+      <MonacoEditor
+        height="400px"
+        language="solidity"
+        theme="vs-dark"
         value={code}
-        onChange={(e) => setCode(e.target.value)}
-        placeholder="Type Solidity code here"
+        editorDidMount={(editor) => (editorRef.current = editor)}
+        onChange={(newCode) => setCode(newCode)}
+        options={{
+          fontSize: 14,
+          minimap: { enabled: false },
+          glyphMargin: true,
+        }}
       />
 
       {/* Compile button */}
       <button
-        className="bg-green-500 text-white px-4 py-2 rounded mt-2"
+        className="mt-2 bg-green-500 px-4 py-2 rounded"
         onClick={compileCode}
       >
         Compile
       </button>
 
-      {/* Warnings panel */}
-      <WarningsPanel warnings={warnings} />
+      {/* Output panel */}
+      <pre className="mt-4 p-2 bg-gray-700 rounded overflow-auto max-h-64">
+        {output}
+      </pre>
     </main>
   );
 };
