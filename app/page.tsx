@@ -1,4 +1,4 @@
-import CodeEditor from "../componentts/CodeEditor";
+import CodeEditor from "../components/CodeEditor";
 
 
 export default function Home() {
