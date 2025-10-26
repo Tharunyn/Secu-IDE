@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "axios": "^1.12.2",
+    "monaco-editor": "^0.52.2",
     "next": "16.0.0",
-    "react": "19.2.0",
+    "react": "^19.2.0",
     "react-dom": "19.2.0",
+    "react-monaco-editor": "^0.59.0",
     "solc": "^0.8.30"
   },
   "devDependencies": {
