@@ -19,7 +19,7 @@ const HomePage: React.FC = () => {
 
   return (
     <main className="h-screen w-full p-4 bg-gray-900 text-white">
-      <h1 className="text-2xl font-bold mb-4">Advanced Solidity Editor</h1>
+      <h1 className="text-2xl font-bold mb-4">Secu-IDE</h1>
       <CodeEditor onCompile={handleCompile} />
       <OutputPanel output={output} />
     </main>
