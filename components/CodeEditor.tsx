@@ -33,7 +33,7 @@ contract HelloWorld {
 
       <button
         onClick={() => onCompile(code)}
-        className="mt-2 bg-green-500 px-4 py-2 rounded"
+        className="mt-2 bg-green-500 px-4 py-2 rounded hover:bg-green-600 cursor-pointer transition"
       >
         Compile
       </button>
