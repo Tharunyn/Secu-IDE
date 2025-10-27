@@ -1,25 +1,20 @@
 'use client';
 import React, { useState } from 'react';
-import solc from 'solc';
-import CodeEditor from '../components/CodeEditor';
-import OutputPanel from '../components/OutputPanel';
+import CodeEditor from '@/components/CodeEditor';
+import OutputPanel from '@/components/OutputPanel';
 
 const HomePage: React.FC = () => {
   const [output, setOutput] = useState('');
 
-  const handleCompile = (code: string) => {
-    try {
-      const input = {
-        language: 'Solidity',
-        sources: { 'Contract.sol': { content: code } },
-        settings: { outputSelection: { '*': { '*': ['*'] } } },
-      };
+  const handleCompile = async (code: string) => {
+    const res = await fetch('/api/compile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
 
-      const compiled = JSON.parse(solc.compile(JSON.stringify(input)));
-      setOutput(JSON.stringify(compiled.errors || compiled.contracts, null, 2));
-    } catch (err: any) {
-      setOutput(`Compilation failed: ${err.message}`);
-    }
+    const data = await res.json();
+    setOutput(data.output);
   };
 
   return (
