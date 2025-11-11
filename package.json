@@ -6,11 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "slither-server": "python slither_server/app.py",
+    "slither-server-docker": "docker build -t slither-server slither_server && docker run --rm -p 5005:5005 slither-server",
+    "slither-server-docker-build": "docker build -t slither-server slither_server",
+    "slither-server-docker-run": "docker run --rm -p 5005:5005 slither-server"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "axios": "^1.12.2",
+    "lucide-react": "^0.548.0",
     "monaco-editor": "^0.52.2",
     "next": "16.0.0",
     "react": "^19.2.0",
